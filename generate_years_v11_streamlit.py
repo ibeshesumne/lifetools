@@ -11,6 +11,7 @@ import streamlit as st
 import csv
 import re
 import io
+from datetime import datetime
 
 
 def get_japanese_era(year, month):
@@ -191,15 +192,14 @@ def main():
     st.markdown("---")
     
     # User inputs
-    col1, col2, col3 = st.columns(3)
+    name = st.text_input("**Enter your name:**", placeholder="e.g., Michael")
+    
+    col1, col2 = st.columns(2)
     
     with col1:
-        name = st.text_input("**Enter your name:**", placeholder="e.g., Michael")
-    
-    with col2:
         birth_year = st.number_input("**Enter your birth year:**", min_value=1868, max_value=2100, value=1990, step=1)
     
-    with col3:
+    with col2:
         months = ['January', 'February', 'March', 'April', 'May', 'June',
                   'July', 'August', 'September', 'October', 'November', 'December']
         birth_month = st.selectbox("**Select your birth month:**", months)
@@ -226,26 +226,37 @@ def main():
                 # Preview section
                 st.markdown("### 📋 Preview")
                 
-                col1, col2 = st.columns(2)
+                # Show first 10 rows
+                st.markdown("**First 10 rows:**")
+                preview_first = all_rows[:11]
+                for i, row in enumerate(preview_first):
+                    st.markdown(f"`{', '.join(map(str, row))}`")
                 
-                with col1:
-                    st.markdown("**First 10 rows:**")
-                    # Show first 10 rows (including header + 9 data rows)
-                    preview_first = all_rows[:11]
-                    for i, row in enumerate(preview_first):
-                        if i == 0:
-                            st.markdown(f"`{', '.join(map(str, row))}`")
-                        else:
-                            st.markdown(f"`{', '.join(map(str, row))}`")
-                    st.markdown("...")
+                st.markdown("...")
                 
-                with col2:
-                    st.markdown("**Last 10 rows:**")
-                    st.markdown("...")
-                    # Show last 10 rows
-                    preview_last = all_rows[-10:]
-                    for i, row in enumerate(preview_last):
-                        st.markdown(f"`{', '.join(map(str, row))}`")
+                # Show last 5 rows up to present day
+                current_year = datetime.now().year
+                current_month = datetime.now().month
+                month_names = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December']
+                current_month_name = month_names[current_month - 1]
+                
+                st.markdown(f"**Last 5 rows (up to {current_month_name} {current_year}):**")
+                
+                # Find rows up to present day
+                present_day_rows = []
+                for row in all_rows[1:]:  # Skip header
+                    if row[0] <= current_year:
+                        present_day_rows.append(row)
+                
+                # Show last 5 rows
+                if len(present_day_rows) > 5:
+                    preview_last = present_day_rows[-5:]
+                else:
+                    preview_last = present_day_rows
+                
+                for row in preview_last:
+                    st.markdown(f"`{', '.join(map(str, row))}`")
                 
                 st.markdown("---")
                 
