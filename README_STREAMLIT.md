@@ -1,4 +1,29 @@
-# Life Chronology Generator - Streamlit App
+# Life Chronology Generator - Streamlit Apps
+
+## Available Versions
+
+### Version 12 (Latest - Recommended)
+**File:** `generate_years_v12_streamlit.py`
+
+- **Compact single-page design** - everything fits without scrolling
+- **Prominent download button** - placed BEFORE the preview table
+- Shows **first 5 rows** preview
+- Shows **last 3 rows** up to present day
+- Clear indication that CSV is ready for download
+- Optimized for one-page viewing
+
+### Version 11
+**File:** `generate_years_v11_streamlit.py`
+
+- Shows first 10 rows preview
+- Shows last 5 rows up to present day
+- Full CSV download option
+
+### Version 10
+**File:** `generate_years_v10_streamlit.py`
+
+- Shows first 20 rows preview
+- Full CSV download option
 
 ## How to Run
 
@@ -7,8 +32,15 @@
 pip install streamlit
 ```
 
-2. Run the Streamlit app:
+2. Run the Streamlit app (choose one):
 ```bash
+# Version 12 (recommended - compact single-page)
+streamlit run generate_years_v12_streamlit.py
+
+# Version 11
+streamlit run generate_years_v11_streamlit.py
+
+# Version 10
 streamlit run generate_years_v10_streamlit.py
 ```
 
@@ -18,7 +50,7 @@ streamlit run generate_years_v10_streamlit.py
 
 - **Interactive Web Interface**: Enter your name, birth year, and birth month
 - **Download CSV**: Download the generated chronology file
-- **Preview**: See the first 20 rows before downloading
+- **Preview**: See abbreviated first and last rows before downloading
 - **No File Cleanup Needed**: CSV is generated in memory and provided for download
 
 ## What's Included in the CSV
