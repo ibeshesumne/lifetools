@@ -6,6 +6,7 @@ import streamlit as st
 try:
     from PyPDF2 import PdfReader, PdfWriter
     from reportlab.lib.pagesizes import letter
+    from reportlab.lib.utils import ImageReader
     from reportlab.pdfgen import canvas
     from reportlab.lib.units import inch
     from PIL import Image
@@ -133,18 +134,17 @@ def image_to_pdf_page(image_bytes):
     x_offset = (page_width - new_width) / 2
     y_offset = (page_height - new_height) / 2
 
-    img_buffer = io.BytesIO()
-    if image.mode not in ("RGB", "L"):
-        image = image.convert("RGB")
-    elif image.mode == "RGBA":
+    # Convert image to RGB if needed (ReportLab requires RGB)
+    if image.mode == "RGBA":
         background = Image.new("RGB", image.size, (255, 255, 255))
         background.paste(image, mask=image.split()[-1])
         image = background
-    image.save(img_buffer, format="PNG" if image.mode == "L" else "JPEG", quality=95)
-    img_buffer.seek(0)
+    elif image.mode not in ("RGB", "L"):
+        image = image.convert("RGB")
 
+    # ImageReader can accept PIL Image objects directly
     c = canvas.Canvas(buffer, pagesize=letter)
-    c.drawImage(img_buffer, x_offset, y_offset, width=new_width, height=new_height, preserveAspectRatio=True)
+    c.drawImage(ImageReader(image), x_offset, y_offset, width=new_width, height=new_height, preserveAspectRatio=True)
     c.save()
     buffer.seek(0)
     return buffer
