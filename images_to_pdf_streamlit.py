@@ -9,7 +9,7 @@ try:
     from reportlab.lib.utils import ImageReader
     from reportlab.pdfgen import canvas
     from reportlab.lib.units import inch
-    from PIL import Image
+    from PIL import Image, ImageOps
     from PIL.ExifTags import TAGS
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
@@ -120,20 +120,48 @@ def create_cover_page(file_info_list, generation_date):
 
 
 def image_to_pdf_page(image_bytes):
-    """Convert one image (PNG/JPEG) to a single PDF page (fit on letter, centered)."""
+    """Convert one image (PNG/JPEG) to a single PDF page (cropped to fill page, no margins)."""
     buffer = io.BytesIO()
     image = Image.open(io.BytesIO(image_bytes))
-    img_width, img_height = image.size
+    
+    # Fix orientation based on EXIF data
+    image = ImageOps.exif_transpose(image)
+    
+    # Get page dimensions (letter size)
     page_width, page_height = letter
-
-    scale_x = (page_width - 2 * inch) / img_width
-    scale_y = (page_height - 2 * inch) / img_height
-    scale = min(scale_x, scale_y)
-    new_width = img_width * scale
-    new_height = img_height * scale
-    x_offset = (page_width - new_width) / 2
-    y_offset = (page_height - new_height) / 2
-
+    
+    # Calculate usable page area (full page, no margins)
+    usable_width = page_width
+    usable_height = page_height
+    
+    # Get image dimensions after orientation fix
+    img_width, img_height = image.size
+    
+    # Calculate aspect ratios
+    page_aspect = usable_width / usable_height
+    img_aspect = img_width / img_height
+    
+    # Crop image to match page aspect ratio (cover mode - fill page, crop excess)
+    if img_aspect > page_aspect:
+        # Image is wider than page - crop left/right
+        new_height = img_height
+        new_width = int(img_height * page_aspect)
+        left = (img_width - new_width) // 2
+        top = 0
+        right = left + new_width
+        bottom = img_height
+    else:
+        # Image is taller than page - crop top/bottom
+        new_width = img_width
+        new_height = int(img_width / page_aspect)
+        left = 0
+        top = (img_height - new_height) // 2
+        right = img_width
+        bottom = top + new_height
+    
+    # Crop the image
+    image = image.crop((left, top, right, bottom))
+    
     # Convert image to RGB if needed (ReportLab requires RGB)
     if image.mode == "RGBA":
         background = Image.new("RGB", image.size, (255, 255, 255))
@@ -141,10 +169,10 @@ def image_to_pdf_page(image_bytes):
         image = background
     elif image.mode not in ("RGB", "L"):
         image = image.convert("RGB")
-
-    # ImageReader can accept PIL Image objects directly
+    
+    # Draw image at full page size (no margins)
     c = canvas.Canvas(buffer, pagesize=letter)
-    c.drawImage(ImageReader(image), x_offset, y_offset, width=new_width, height=new_height, preserveAspectRatio=True)
+    c.drawImage(ImageReader(image), 0, 0, width=usable_width, height=usable_height, preserveAspectRatio=True)
     c.save()
     buffer.seek(0)
     return buffer
